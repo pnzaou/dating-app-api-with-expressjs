@@ -1,3 +1,4 @@
 /.meow
 /node_modules
 .env
+/src/uploads

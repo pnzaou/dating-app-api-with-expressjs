@@ -1,5 +1,6 @@
 const express = require("express")
 const cors = require("cors")
+const path = require("path")
 const connexion = require("./src/db/db")
 const router = require("./src/routes")
 const app = express()
@@ -8,6 +9,7 @@ const port = 8080
 app
 .use(cors())
 .use(express.json())
+.use('/uploads', express.static(path.join(__dirname, "src/uploads")))
 .use(router)
 
 app.get("/", (req, res) => {

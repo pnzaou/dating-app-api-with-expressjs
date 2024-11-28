@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification de votre adresse e-mail</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .email-header {
+            text-align: center;
+            padding: 10px 0;
+            border-bottom: 2px solid #f4f4f4;
+        }
+        .email-header img {
+            width: 150px;
+        }
+        .email-body {
+            padding: 20px 0;
+        }
+        .email-body h2 {
+            color: #333;
+        }
+        .email-body p {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .verification-code {
+            font-size: 44px;
+            font-weight: bold;
+            color: #4e7299;
+            text-align: center;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .btn {
+            text-decoration: none;
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: #4e7299;
+            color: #fff;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .email-footer {
+            padding: 20px 0;
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+        }
+        .email-footer p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <img src="https://yourlogo.com/logo.png" alt="Votre Logo">
+        </div>
+
+        <div class="email-body">
+            <h2>Vérifiez votre adresse e-mail</h2>
+            <p>Bonjour,</p>
+            <p>Vous avez demandé à vérifier votre adresse e-mail. Veuillez utiliser le code de vérification ci-dessous pour continuer votre inscription :</p>
+
+            <div class="verification-code">
+                {{code}}
+            </div>
+
+            <p style="text-align: center;">
+                <a href="{{confirmationLink}}" class="btn">Cliquer ici pour renseigner le code</a>
+            </p>
+
+            <p>Si vous n'avez pas demandé cette vérification, veuillez ignorer cet e-mail ou contacter notre support.</p>
+        </div>
+
+        <div class="email-footer">
+            <p>Cordialement,</p>
+            <p>L'équipe Support</p>
+            <p>DATING-APP - <a href="https://votreapp.com">votreapp.com</a></p>
+        </div>
+    </div>
+</body>
+</html>
