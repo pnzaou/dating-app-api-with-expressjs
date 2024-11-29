@@ -6,36 +6,37 @@ const personneSchema = new Schema({
     prenom: {type: String, required: true},
     email: {type: String, required: true, unique: true},
     password: {type: String, required: true},
-    roleId: {type: Schema.Types.ObjectId, ref: 'Role', required: true},
+    roleId: {type: Schema.Types.ObjectId, ref: 'Role'},
 }, {discriminatorKey: '_t', timestamps: true})
 
 const Personne = model('Personne', personneSchema)
 
 const clientSchema = new mongoose.Schema({
-    photos: {type: [String], required: true},
-    adresse: {
+  taille: {type: Number, required: true},
+  photos: {type: [String], required: true},
+  adresse: {
     type: {
-      type: String, 
+      type: String,
       enum: ['Point'],
-      required: true
+      default: null
     },
     coordinates: {
       type: [Number],
-      required: true,
+      default: null,
       validate: {
         validator: function (coords) {
-          return coords.length === 2;
+          return coords === null || coords.length === 2;
         },
         message: 'Les coordonnées doivent contenir exactement [longitude, latitude]',
       },
-    }
+    },
   },
   isCertified: { type: Boolean, default: false },
   dateDeNaissance: { type: Date, required: true },
   Likes: [
     {type: Schema.Types.ObjectId, ref: 'Client'}
   ],
-  relationId: {type: Schema.Types.ObjectId, ref: 'Relation', required: true},
+  relationId: {type: Schema.Types.ObjectId, ref: 'Relation'},
 })
 
 const adminSchema = new mongoose.Schema({})

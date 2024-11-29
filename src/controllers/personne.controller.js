@@ -1,8 +1,9 @@
-const Personne = require("../models/Personne.model")
+const {Personne, Client} = require("../models/Personne.model")
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const fs = require("fs")
-const { generateFourDigitCode, sendFourDigitCodeEmail, transporter } = require("../services")
+const { generateFourDigitCode, sendFourDigitCodeEmail, transporter, calculerAge } = require("../services")
+const { type } = require("os")
 
 const signUpRequest = async (req, res) => {
     const {email} = req.body 
@@ -24,7 +25,7 @@ const signUpRequest = async (req, res) => {
 
 const signUpEmailConfirm = async (req, res) => {
     const {token} = req.query
-    const digitCode = req.body 
+    const {digitCode} = req.body 
     try {
         if(!token) {
             return res.status(403).json({message: "Accès refusé"})
@@ -35,7 +36,7 @@ const signUpEmailConfirm = async (req, res) => {
                     const Link = '/email-signup-methode'
                     return res.status(401).json({message: "Lien de validation expiré! Veuillez renvoyer votre email", lien: Link})
                 } else {
-                    if(digitCode.digitCode.toString() === decode.code.toString()) {
+                    if(digitCode.toString() === decode.code.toString()) {
                         const email = decode.email
                         const secret = fs.readFileSync("./.meow/meowPr.pem")
                         const email_token = jwt.sign({email}, secret, {algorithm: 'RS256'})
@@ -55,12 +56,36 @@ const signUpEmailConfirm = async (req, res) => {
 }
 
 const signUp = async (req, res) => {
-    const {nom, prenom, email, password, dateDeNaissance} = req.body 
-    const photos = req.files.map(photo => `${req.protocol}://${req.get('host')}/uploads/${photo.filename}`)
     try {
+        const {nom, prenom, email, password, dateDeNaissance, taille, latitude, longitude} = req.body 
+        const age = calculerAge(dateDeNaissance)
+        if (age < 18) {
+            return res.status(400).json({ message: 'Vous devez avoir au moins 18 ans pour vous inscrire.' });
+        }
+        const photos = req.files.map(photo => `${req.protocol}://${req.get('host')}/uploads/${photo.filename}`)
+         const adresse = latitude && longitude ? {
+            type: 'Point',
+            coordinates: [parseFloat(longitude), parseFloat(latitude)]
+         } : null;
+        const salt = await bcrypt.genSalt(10)
+        const hashedPassword = await bcrypt.hash(password, salt)
+
+        const rep = await Client.create({
+            nom,
+            prenom,
+            email,
+            password: hashedPassword,
+            taille,
+            dateDeNaissance,
+            photos,
+            adresse
+        })
+
+        res.status(201).json({message: "Inscription réussie", rep})
         
     } catch (error) {
-        
+        console.log(error.message);
+        res.status(500).json({ message: 'Une erreur est survenue.' });
     }
 }
 
