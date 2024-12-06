@@ -92,7 +92,7 @@ const signUp = async (req, res) => {
 const signIn = async (req, res) => {
     const {email, password} = req.body
     try {
-        const personne = await Personne.Personne.findOne({email})
+        const personne = await Personne.findOne({email})
         if(!personne) {
             return res.status(401).json({message: "Email ou mot de passe incorrect"})
         } else {
@@ -111,6 +111,7 @@ const signIn = async (req, res) => {
             }
         }
     } catch (error) {
+        console.log(error.message);
         const msg = 'Erreur lors de la connexion'
         return res.status(500).json({message: msg, erreur: error})
     }

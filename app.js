@@ -3,6 +3,7 @@ const cors = require("cors")
 const path = require("path")
 const connexion = require("./src/db/db")
 const router = require("./src/routes")
+const initializeCentresInterets = require("./src/controllers/centreInteret.controller")
 const app = express()
 const port = 8080
 
@@ -12,11 +13,9 @@ app
 .use('/uploads', express.static(path.join(__dirname, "src/uploads")))
 .use(router)
 
-app.get("/", (req, res) => {
-    res.send("hello api")
+connexion().then(() => {
+    initializeCentresInterets()
 })
-
-connexion()
 
 app.listen(port, () => {
     console.log(`http://localhost:8080`)
