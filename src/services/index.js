@@ -31,13 +31,20 @@ const transporter = nodemailer.createTransport({
     },
   });
   
-const sendFourDigitCodeEmail = async (code, userEmail, confirmationLink, filename, transporter) => {
+const sendFourDigitCodeEmail = async (code, userEmail, filename, transporter, confirmationLink = null) => {
+    console.log(confirmationLink);
     const emailTemplatePath = path.join('src', 'mails', filename)
     const emailTemplate = fs.readFileSync(emailTemplatePath, 'utf8')
+    let emailContent = emailTemplate
+
+    if(confirmationLink === null) {
+        emailContent = emailContent.replace('{{LINK}}', "")
+    } else {
+        const link = `<p style="text-align: center;"><a style="color: #fff;" href="${confirmationLink}" class="btn">Cliquer ici pour renseigner le code</a></p>`
+        emailContent = emailContent.replace('{{LINK}}', link)
+    }
   
-    const emailContent = emailTemplate
-        .replace('{{code}}', code)
-        .replace('{{confirmationLink}}', confirmationLink)
+    emailContent = emailContent.replace('{{code}}', code)
   
     let mailOptions = {
         from: 'perrinemmanuelnzaou@gmail.com',

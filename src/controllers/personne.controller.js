@@ -6,16 +6,20 @@ const { generateFourDigitCode, sendFourDigitCodeEmail, transporter, calculerAge 
 const { type } = require("os")
 
 const signUpRequest = async (req, res) => {
-    const {email} = req.body 
+    const {email, environnement} = req.body 
     try {
         const code = generateFourDigitCode(email)
         const secret = fs.readFileSync("./.meow/meowPr.pem")
         const token = jwt.sign({email, code}, secret, {expiresIn: '2m', algorithm: 'RS256'})
-        const confirmationLink = `http://localhost:5173/email-verification?token=${token}`
 
-        await sendFourDigitCodeEmail(code, email, confirmationLink, "verif-email-mail.html", transporter)
+        if(environnement === "web") {
+            const confirmationLink = `http://localhost:5173/email-verification?token=${token}`
+            await sendFourDigitCodeEmail(code, email, "verif-email-mail.html", transporter, confirmationLink)
+        } else {
+            await sendFourDigitCodeEmail(code, email, "verif-email-mail.html", transporter)
+        }
 
-        return res.status(200).json({message: 'Veuillez vérifier votre boîte mail.'});
+        return res.status(200).json({message: 'Veuillez vérifier votre boîte mail.', token});
     } catch (error) {
         const msg = 'Une erreur est survenue veuillez réessayer'
         console.log(error);
@@ -34,7 +38,7 @@ const signUpEmailConfirm = async (req, res) => {
             jwt.verify(token, secret, (err, decode) => {
                 if(err) {
                     const Link = '/email-signup-methode'
-                    return res.status(401).json({message: "Lien de validation expiré! Veuillez renvoyer votre email", lien: Link})
+                    return res.status(401).json({message: "Lien de validation expiré! Veuillez renvoyer votre email", lien: Link, redirect: true})
                 } else {
                     if(digitCode.toString() === decode.code.toString()) {
                         const email = decode.email
