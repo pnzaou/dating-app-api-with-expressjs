@@ -38,14 +38,14 @@ const signUpEmailConfirm = async (req, res) => {
             jwt.verify(token, secret, (err, decode) => {
                 if(err) {
                     const Link = '/email-signup-methode'
-                    return res.status(401).json({message: "Lien de validation expiré! Veuillez renvoyer votre email", lien: Link, redirect: true})
+                    return res.status(401).json({message: "Lien de validation expiré! Veuillez renvoyer votre email", lien: Link, redirectBack: true})
                 } else {
                     if(digitCode.toString() === decode.code.toString()) {
                         const email = decode.email
                         const secret = fs.readFileSync("./.meow/meowPr.pem")
                         const email_token = jwt.sign({email}, secret, {algorithm: 'RS256'})
                         const Link = `/signUp-form?token=${email_token}`
-                        return res.status(200).json({message: 'Code correct.', lien: Link});
+                        return res.status(200).json({message: 'Code correct.', token: email_token, lien: Link});
                     } else {
                         return res.status(401).json({message: "Code incorrect! Réessayez"})
                     }
