@@ -1,3 +1,4 @@
+const mongoose = require("mongoose")
 const {Personne, Client} = require("../models/Personne.model")
 const ClientCentreInteret = require("../models/ClientCentreInteret.model")
 const bcrypt = require("bcrypt")
@@ -61,6 +62,8 @@ const signUpEmailConfirm = async (req, res) => {
 }
 
 const signUp = async (req, res) => {
+    const session = await mongoose.startSession(); // Démarre une session
+    session.startTransaction()
     try {
         const {nom, prenom, email, password, dateDeNaissance, taille, latitude, longitude, centreInteretId} = req.body 
     
@@ -73,7 +76,7 @@ const signUp = async (req, res) => {
         if (existingClient) {
             return res.status(400).json({ message: 'Cet email est déjà utilisé.' });
         }
-        
+
         const photos = req.files.map(photo => `${req.protocol}://${req.get('host')}/uploads/${photo.filename}`)
          const adresse = latitude && longitude ? {
             type: 'Point',
@@ -82,7 +85,7 @@ const signUp = async (req, res) => {
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(password, salt)
 
-        const rep = await Client.create({
+        const rep = await Client.create([{
             nom,
             prenom,
             email,
@@ -91,20 +94,25 @@ const signUp = async (req, res) => {
             dateDeNaissance,
             photos,
             adresse
-        })
+        }],{session})
 
         if (centreInteretId) {
             await Promise.all(centreInteretId.split(',').map(ci => {
-                return ClientCentreInteret.create({
-                    clientId: rep._id,
+                return ClientCentreInteret.create([{
+                    clientId: rep[0]._id,
                     centreInteretId: ci
-                })
+                }],{session})
             }))
         }
+
+        await session.commitTransaction()
+        session.endSession()
 
         res.status(201).json({message: "Inscription réussie", rep})
         
     } catch (error) {
+        await session.abortTransaction()
+        session.endSession()
         console.log(error.message);
         res.status(500).json({ message: 'Une erreur est survenue! Veuillez réessayer.' });
     }
