@@ -8,3 +8,5 @@ const messageSchema = new Schema({
     sendeur: {type: Schema.Types.ObjectId, ref: 'Client', required: true},
     discussionId: {type: Schema.Types.ObjectId, ref: 'Discussion', required: true}
 },{timestamps: true})
+
+module.exports = model("Message", messageSchema)

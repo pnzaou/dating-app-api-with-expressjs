@@ -1,4 +1,5 @@
 const {Personne, Client} = require("../models/Personne.model")
+const ClientCentreInteret = require("../models/ClientCentreInteret.model")
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const fs = require("fs")
@@ -61,11 +62,18 @@ const signUpEmailConfirm = async (req, res) => {
 
 const signUp = async (req, res) => {
     try {
-        const {nom, prenom, email, password, dateDeNaissance, taille, latitude, longitude} = req.body 
+        const {nom, prenom, email, password, dateDeNaissance, taille, latitude, longitude, centreInteretId} = req.body 
+    
         const age = calculerAge(dateDeNaissance)
         if (age < 18) {
             return res.status(400).json({ message: 'Vous devez avoir au moins 18 ans pour vous inscrire.' });
         }
+
+        const existingClient = await Client.findOne({ email });
+        if (existingClient) {
+            return res.status(400).json({ message: 'Cet email est déjà utilisé.' });
+        }
+        
         const photos = req.files.map(photo => `${req.protocol}://${req.get('host')}/uploads/${photo.filename}`)
          const adresse = latitude && longitude ? {
             type: 'Point',
@@ -85,11 +93,20 @@ const signUp = async (req, res) => {
             adresse
         })
 
+        if (centreInteretId) {
+            await Promise.all(centreInteretId.split(',').map(ci => {
+                return ClientCentreInteret.create({
+                    clientId: rep._id,
+                    centreInteretId: ci
+                })
+            }))
+        }
+
         res.status(201).json({message: "Inscription réussie", rep})
         
     } catch (error) {
         console.log(error.message);
-        res.status(500).json({ message: 'Une erreur est survenue.' });
+        res.status(500).json({ message: 'Une erreur est survenue! Veuillez réessayer.' });
     }
 }
 

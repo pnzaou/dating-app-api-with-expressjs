@@ -13,6 +13,6 @@ router.post("/api/personnes/signup-email-confirm", signUpEmailConfirm)
 router.post("/api/personnes/signup", uploadMultiple, signUp)
 router.post("/api/personnes/signin", signIn)
 
-router.get("/api/centres-d'intérêts", getCentreInterts)
+router.get("/api/centres-dinterets", getCentreInterts)
 
 module.exports = router
