@@ -3,7 +3,7 @@ const cors = require("cors")
 const path = require("path")
 const connexion = require("./src/db/db")
 const router = require("./src/routes")
-const initializeCentresInterets = require("./src/controllers/centreInteret.controller")
+const { initializeCentresInterets } = require("./src/controllers/centreInteret.controller")
 const app = express()
 const port = 8080
 

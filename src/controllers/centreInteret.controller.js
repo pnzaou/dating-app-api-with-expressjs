@@ -53,4 +53,17 @@ const initializeCentresInterets = async () => {
     }
 }
 
-module.exports = initializeCentresInterets
+const getCentreInterts = async (req, res) => {
+    try {
+        const CI = await CentreInteret.find()
+        return res.status(200).json({message: "Centre d'intérêt récupérés avec succès", CI})
+    } catch (error) {
+        console.log(error.message);
+        return res.status(500).json({message: "Erreur lors de la récupération des données", error})
+    }
+}
+
+module.exports = {
+    initializeCentresInterets,
+    getCentreInterts
+}

@@ -32,7 +32,6 @@ const transporter = nodemailer.createTransport({
   });
   
 const sendFourDigitCodeEmail = async (code, userEmail, filename, transporter, confirmationLink = null) => {
-    console.log(confirmationLink);
     const emailTemplatePath = path.join('src', 'mails', filename)
     const emailTemplate = fs.readFileSync(emailTemplatePath, 'utf8')
     let emailContent = emailTemplate
