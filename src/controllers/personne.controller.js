@@ -1,6 +1,7 @@
 const mongoose = require("mongoose")
 const {Personne, Client} = require("../models/Personne.model")
 const ClientCentreInteret = require("../models/ClientCentreInteret.model")
+const Match = require("../models/Match.model")
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const fs = require("fs")
@@ -146,10 +147,85 @@ const signIn = async (req, res) => {
     }
 }
 
+const toggleLikeAndMatch = async (req, res) => {
+    const session = await mongoose.startSession() // Démarre une session pour la transaction
+    session.startTransaction()
+
+    try {
+        const { id } = req.authData
+        const { favId } = req.body
+
+        // 1. Validation des entrées
+        if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(favId)) {
+            return res.status(400).json({ message: "ID invalide." })
+        }
+        if (id === favId) {
+            return res.status(400).json({ message: "Vous ne pouvez pas liker votre propre profil." })
+        }
+
+        // 2. Récupération des clients dans la transaction
+        const client = await Client.findById(id).session(session)
+        const favClient = await Client.findById(favId).session(session)
+
+        if (!client || !favClient) {
+            await session.abortTransaction()
+            return res.status(404).json({ message: "Utilisateur non trouvé." })
+        }
+
+        let likeState = false
+        let msg = ''
+        let matchCreated = false
+
+        // 3. Gestion du Like/Dislike
+        if (client.Likes.includes(favId)) {
+            // Retirer le Like
+            client.Likes.pull(favId)
+            await client.save({ session })
+
+            // Supprimer le Match si existant
+            await Match.deleteOne({
+                $or: [
+                    { $and: [{ client1Id: id }, { client2Id: favId }] },
+                    { $and: [{ client1Id: favId }, { client2Id: id }] }
+                ]
+            }).session(session)
+
+            msg = `Vous avez disliké le profil de ${favClient.prenom}.`
+        } else {
+            // Ajouter le Like
+            client.Likes.push(favId)
+            await client.save({ session })
+            likeState = true
+
+            msg = `Vous avez liké le profil de ${favClient.prenom}.`
+
+            // Vérifier si c'est un match
+            if (favClient.Likes.includes(id)) {
+                await Match.create([{ client1Id: favId, client2Id: id }], { session })
+                msg += " C'est un match !"
+                matchCreated = true
+            }
+        }
+
+        // Commit de la transaction
+        await session.commitTransaction()
+        session.endSession()
+
+        // Réponse réussie
+        return res.status(200).json({ message: msg, likeState, matchCreated })
+    } catch (error) {
+        // Annuler la transaction en cas d'erreur
+        await session.abortTransaction()
+        session.endSession()
+        return res.status(500).json({ message: "Une erreur s'est produite.", error: error.message })
+    }
+}
+
 
 module.exports = {
     signUpRequest,
     signUpEmailConfirm,
     signUp,
-    signIn
+    signIn,
+    toggleLikeAndMatch
 }
