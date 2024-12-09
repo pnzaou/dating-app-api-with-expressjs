@@ -12,6 +12,8 @@ const personneSchema = new Schema({
 const Personne = model('Personne', personneSchema)
 
 const clientSchema = new mongoose.Schema({
+  genre: {type: String, required: true},
+  intresse_par: {type: String, required: true},
   taille: {type: Number, required: true},
   photos: {type: [String], required: true},
   adresse: {
@@ -36,7 +38,7 @@ const clientSchema = new mongoose.Schema({
   Likes: [
     {type: Schema.Types.ObjectId, ref: 'Client'}
   ],
-  relationId: {type: Schema.Types.ObjectId, ref: 'Relation'},
+  relationId: {type: Schema.Types.ObjectId, ref: 'Relation', required: true},
 })
 
 const adminSchema = new mongoose.Schema({})

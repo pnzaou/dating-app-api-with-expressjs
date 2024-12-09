@@ -3,6 +3,7 @@ const { signUp, signIn, signUpRequest, signUpEmailConfirm, toggleLikeAndMatch } 
 const { uploadMultiple } = require("../middlewares/multer.middleware")
 const { getCentreInterts } = require("../controllers/centreInteret.controller")
 const verifToken = require("../middlewares/verifyToke.middleware")
+const { getRelations } = require("../controllers/relation.controller")
 const router = express.Router()
 
 router.get('/', (req, res) => {
@@ -18,5 +19,8 @@ router.patch("/api/personnes/add-likes", verifToken, toggleLikeAndMatch)
 
 //Centre d'intérêt
 router.get("/api/centres-dinterets", getCentreInterts)
+
+//Relations
+router.get("/api/relations", getRelations)
 
 module.exports = router

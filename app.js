@@ -4,6 +4,7 @@ const path = require("path")
 const connexion = require("./src/db/db")
 const router = require("./src/routes")
 const { initializeCentresInterets } = require("./src/controllers/centreInteret.controller")
+const { initializeRelation } = require("./src/controllers/relation.controller")
 const app = express()
 const port = 8080
 
@@ -14,7 +15,9 @@ app
 .use(router)
 
 connexion().then(() => {
-    initializeCentresInterets()
+    initializeCentresInterets().then(() => {
+        initializeRelation()
+    })
 })
 
 app.listen(port, () => {

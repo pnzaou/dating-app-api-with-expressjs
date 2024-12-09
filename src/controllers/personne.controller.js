@@ -66,7 +66,7 @@ const signUp = async (req, res) => {
     const session = await mongoose.startSession(); // Démarre une session
     session.startTransaction()
     try {
-        const {nom, prenom, email, password, dateDeNaissance, taille, latitude, longitude, centreInteretId} = req.body 
+        const {nom, prenom, email, password, dateDeNaissance, taille, genre, intresse_par, latitude, longitude, relationId, centreInteretId} = req.body 
     
         const age = calculerAge(dateDeNaissance)
         if (age < 18) {
@@ -92,9 +92,12 @@ const signUp = async (req, res) => {
             email,
             password: hashedPassword,
             taille,
+            genre,
+            intresse_par,
             dateDeNaissance,
             photos,
-            adresse
+            adresse,
+            relationId
         }],{session})
 
         if (centreInteretId) {
@@ -148,14 +151,13 @@ const signIn = async (req, res) => {
 }
 
 const toggleLikeAndMatch = async (req, res) => {
-    const session = await mongoose.startSession() // Démarre une session pour la transaction
+    const session = await mongoose.startSession()
     session.startTransaction()
 
     try {
         const { id } = req.authData
         const { favId } = req.body
 
-        // 1. Validation des entrées
         if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(favId)) {
             return res.status(400).json({ message: "ID invalide." })
         }
@@ -163,7 +165,6 @@ const toggleLikeAndMatch = async (req, res) => {
             return res.status(400).json({ message: "Vous ne pouvez pas liker votre propre profil." })
         }
 
-        // 2. Récupération des clients dans la transaction
         const client = await Client.findById(id).session(session)
         const favClient = await Client.findById(favId).session(session)
 
@@ -176,13 +177,10 @@ const toggleLikeAndMatch = async (req, res) => {
         let msg = ''
         let matchCreated = false
 
-        // 3. Gestion du Like/Dislike
         if (client.Likes.includes(favId)) {
-            // Retirer le Like
             client.Likes.pull(favId)
             await client.save({ session })
 
-            // Supprimer le Match si existant
             await Match.deleteOne({
                 $or: [
                     { $and: [{ client1Id: id }, { client2Id: favId }] },
@@ -192,14 +190,12 @@ const toggleLikeAndMatch = async (req, res) => {
 
             msg = `Vous avez disliké le profil de ${favClient.prenom}.`
         } else {
-            // Ajouter le Like
             client.Likes.push(favId)
             await client.save({ session })
             likeState = true
 
             msg = `Vous avez liké le profil de ${favClient.prenom}.`
 
-            // Vérifier si c'est un match
             if (favClient.Likes.includes(id)) {
                 await Match.create([{ client1Id: favId, client2Id: id }], { session })
                 msg += " C'est un match !"
@@ -207,14 +203,11 @@ const toggleLikeAndMatch = async (req, res) => {
             }
         }
 
-        // Commit de la transaction
         await session.commitTransaction()
         session.endSession()
 
-        // Réponse réussie
         return res.status(200).json({ message: msg, likeState, matchCreated })
     } catch (error) {
-        // Annuler la transaction en cas d'erreur
         await session.abortTransaction()
         session.endSession()
         return res.status(500).json({ message: "Une erreur s'est produite.", error: error.message })
