@@ -4,6 +4,7 @@ const { uploadMultiple } = require("../middlewares/multer.middleware")
 const { getCentreInterts } = require("../controllers/centreInteret.controller")
 const verifToken = require("../middlewares/verifyToke.middleware")
 const { getRelations } = require("../controllers/relation.controller")
+const { toggleFavori, getFavoris, getFavoriCount } = require("../controllers/favori.controller")
 const router = express.Router()
 
 router.get('/', (req, res) => {
@@ -22,5 +23,11 @@ router.get("/api/centres-dinterets", getCentreInterts)
 
 //Relations
 router.get("/api/relations", getRelations)
+
+//Favori
+router.route("/api/favoris")
+    .post(verifToken, toggleFavori)
+    .get(verifToken, getFavoris)
+router.get("/api/favoris/count", verifToken, getFavoriCount)
 
 module.exports = router

@@ -156,17 +156,17 @@ const toggleLikeAndMatch = async (req, res) => {
 
     try {
         const { id } = req.authData
-        const { favId } = req.body
+        const { likedId } = req.body
 
-        if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(favId)) {
+        if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(likedId)) {
             return res.status(400).json({ message: "ID invalide." })
         }
-        if (id === favId) {
+        if (id === likedId) {
             return res.status(400).json({ message: "Vous ne pouvez pas liker votre propre profil." })
         }
 
         const client = await Client.findById(id).session(session)
-        const favClient = await Client.findById(favId).session(session)
+        const favClient = await Client.findById(likedId).session(session)
 
         if (!client || !favClient) {
             await session.abortTransaction()
@@ -177,27 +177,27 @@ const toggleLikeAndMatch = async (req, res) => {
         let msg = ''
         let matchCreated = false
 
-        if (client.Likes.includes(favId)) {
-            client.Likes.pull(favId)
+        if (client.Likes.includes(likedId)) {
+            client.Likes.pull(likedId)
             await client.save({ session })
 
             await Match.deleteOne({
                 $or: [
-                    { $and: [{ client1Id: id }, { client2Id: favId }] },
-                    { $and: [{ client1Id: favId }, { client2Id: id }] }
+                    { $and: [{ client1Id: id }, { client2Id: likedId }] },
+                    { $and: [{ client1Id: likedId }, { client2Id: id }] }
                 ]
             }).session(session)
 
             msg = `Vous avez disliké le profil de ${favClient.prenom}.`
         } else {
-            client.Likes.push(favId)
+            client.Likes.push(likedId)
             await client.save({ session })
             likeState = true
 
             msg = `Vous avez liké le profil de ${favClient.prenom}.`
 
             if (favClient.Likes.includes(id)) {
-                await Match.create([{ client1Id: favId, client2Id: id }], { session })
+                await Match.create([{ client1Id: likedId, client2Id: id }], { session })
                 msg += " C'est un match !"
                 matchCreated = true
             }
