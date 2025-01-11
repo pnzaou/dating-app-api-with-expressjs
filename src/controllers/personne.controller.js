@@ -11,6 +11,11 @@ const { type } = require("os")
 const signUpRequest = async (req, res) => {
     const {email, environnement} = req.body 
     try {
+        const existingClient = await Client.findOne({ email });
+        if (existingClient) {
+            return res.status(400).json({ message: 'Cet email est déjà utilisé.' });
+        }
+        
         const code = generateFourDigitCode(email)
         const secret = fs.readFileSync("./.meow/meowPr.pem")
         const token = jwt.sign({email, code}, secret, {expiresIn: '2m', algorithm: 'RS256'})
@@ -117,7 +122,7 @@ const signUp = async (req, res) => {
     } catch (error) {
         await session.abortTransaction()
         session.endSession()
-        console.log(error.message);
+        console.log(error);
         res.status(500).json({ message: 'Une erreur est survenue! Veuillez réessayer.' });
     }
 }
@@ -144,7 +149,7 @@ const signIn = async (req, res) => {
             }
         }
     } catch (error) {
-        console.log(error.message);
+        console.log(error);
         const msg = 'Erreur lors de la connexion'
         return res.status(500).json({message: msg, erreur: error})
     }
@@ -210,15 +215,89 @@ const toggleLikeAndMatch = async (req, res) => {
     } catch (error) {
         await session.abortTransaction()
         session.endSession()
+        console.log(error);
         return res.status(500).json({ message: "Une erreur s'est produite.", error: error.message })
     }
 }
 
+const getAllClients = async (req, res) => {
+    const { id } = req.authData
+    try {
+
+        if(!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({message: "Id invalid."})
+        }
+
+        const client = await Client.findById(id)
+        if(!client) {
+            return res.status(400).json({message: "Client non trouvé."})
+        }
+
+        if(!client.adresse || !client.adresse.coordinates || client.adresse.coordinates.length !== 2) {
+            const totalClients = await Client.countDocuments();
+            const clients = await Client.aggregate([
+                {
+                    $match: {
+                        _id: { $ne:  mongoose.Types.ObjectId(id) }
+                    }
+                },
+                {
+                    $project: { password: 0 }
+                },
+                {
+                    $sample: { size: totalClients - 1 }
+                }
+            ])
+
+            return res.status(200).json({
+                message: "Clients récupérés avec succès (aléatoire).",
+                data: clients
+            });
+        }
+
+        const userLocation = client.adresse.coordinates
+        const clients = await Client.aggregate([
+            {
+                $match: {
+                    _id: { $ne:  id }
+                }
+            },
+            {
+                $geoNear: {
+                    near: {
+                        type: "Point",
+                        coordinates: userLocation
+                    },
+                    distanceField: "distance",
+                    spherical: true
+                },
+            },
+            {
+                $sort: { distance: 1 }
+            },
+            {
+                $project: {
+                  password: 0
+                },
+            }
+        ])
+
+        return res.status(200).json({
+            message: "Clients récupérés avec succès (proximité).",
+            data: clients
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Une erreur s'est produite.", error: error.message })
+    }
+}
 
 module.exports = {
     signUpRequest,
     signUpEmailConfirm,
     signUp,
     signIn,
-    toggleLikeAndMatch
+    toggleLikeAndMatch,
+    getAllClients
 }

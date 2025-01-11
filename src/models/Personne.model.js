@@ -41,6 +41,11 @@ const clientSchema = new mongoose.Schema({
   relationId: {type: Schema.Types.ObjectId, ref: 'Relation', required: true},
 })
 
+clientSchema.index({ 'adresse.coordinates': '2dsphere' }); 
+clientSchema.index({ relationId: 1 }); 
+clientSchema.index({ isCertified: 1 });
+clientSchema.index({ Likes: 1 })
+
 const adminSchema = new mongoose.Schema({})
 
 const Client = Personne.discriminator('Client', clientSchema)
